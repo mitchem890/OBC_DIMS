@@ -99,7 +99,7 @@ void StartDefaultTask(void const * argument)
 
   //-------------------- sensors init start and print to both communication channels ------------------
   // That is just an example how to initialise all sensors and to print to two USART channels if needed
-
+    fprintf(PAYLOAD,"Starting Example\r\n");
       D_XCAM_Example();
 
       //----------------------------sensors init end

@@ -48,15 +48,16 @@ void D_XCAM_Example(void)
   D_XCAM_SetParameter(0x02, 0x01); // begin capture
   TaskMonitor_IamAlive(TASK_MONITOR_DEFAULT);
 
-  do
-  {
+  do{
+    fprintf(PAYLOAD, "Waiting for image...");
     D_XCAM_WaitSeconds(1, false);
   //  9) A payload status flag of 0x02 indicates the image capture is complete and the data packets have been successfully compiled. The payload will then return to standby mode 0x00.
   // 10) If the payload status flag reads bitwise 0x10 then the operation has failed for some reason (refer to section 6.5.3 for details). The payload will attempt to complete each operation three times before returning this code.
     D_XCAM_GetStatus(D_XCAM_Status);
   }
-  while (!(D_XCAM_AnalyzeStatus(D_XCAM_Status) & 0x02));
 
+  while (!(D_XCAM_AnalyzeStatus(D_XCAM_Status) & 0x02));
+  fprintf(PAYLOAD, "Image captured!\r\n");
 // 11) The payload data packets waiting will be incremented as the payload returns to standby, to reflect the image packets waiting in the payload memory.
 // 12) Provided the default parameters are still loaded, the data packets waiting will contain an uncompressed thumbnail image and a compressed, unwindowed full image.
 // 13) Data can now be downloaded by the platform. Both I2C download commands will be treated identically by the payload.
@@ -194,7 +195,7 @@ uint8_t D_XCAM_GetImageI2C(uint8_t *buffer)
 
   D_XCAM_SetCRC(txbuf, 4);
   if (D_XCAM_DEBUG)
-    fprintf(PAYLOAD, "Sending I2C Download Command\r");
+    fprintf(PAYLOAD, "Sending I2C Download Image Command\r");
   if (D_XCAM_transmit(txbuf, 4))
     return 1;
   osDelay(3);
@@ -397,6 +398,7 @@ uint8_t D_XCAM_transmit(uint8_t *buffer, size_t len)
 
 uint8_t D_XCAM_receive(uint8_t *buffer, size_t len, bool ack)
 {
+  fprintf(PAYLOAD, "\tXCAM_receive\r"); 
   HAL_StatusTypeDef ret = HAL_ERROR;
   uint8_t buf[5] = {0};
   if (len > 0)
