@@ -4,6 +4,7 @@ Damon's Reference XCAM Implementation
 */
 #include "D_XCAM.h"
 #include "TaskMonitor.h"
+#include "EPS.h"
 
 #define D_XCAM_ADDRESS (0x66)
 #define D_XCAM_DEBUG (1)
@@ -20,7 +21,8 @@ void D_XCAM_Example(void)
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
 
   D_XCAM_WaitSeconds(2, true);  // wait for the other tasks to stop printing text
-
+  D_XCAM_Power_On();
+  
   D_XCAM_Init();
 
 //  4) Write to parameter 0x00 to identify which interface you wish to acquire an image from (0 for SI0, 1 for SI1, 2 for SI2).
@@ -75,6 +77,59 @@ void D_XCAM_Example(void)
     osDelay(100);
     TaskMonitor_IamAlive(TASK_MONITOR_DEFAULT);
   }
+}
+
+//Write a test File to the SD Card
+void Write_To_File(){
+  FRESULT res; /* FatFs function common result code */
+  uint32_t byteswritten, bytesread; /* File write/read counts */
+  uint8_t wtext[] = "STM32 FATFS works great!"; /* File write buffer */
+  uint8_t rtext[_MAX_SS];/* File read buffer */
+  //Attempt to Mount File
+	if(f_mount(&SDFatFS, (TCHAR const*)SDPath, 0) != FR_OK){
+		//if it didnt work
+    Error_Handler();
+	}else{
+		
+    if(f_mkfs((TCHAR const*)SDPath, FM_ANY, 0, rtext, sizeof(rtext)) != FR_OK){
+			  Error_Handler();
+	  }else{
+			//Open file for writing (Create)
+			if(f_open(&SDFile, "Test.TXT", FA_CREATE_ALWAYS | FA_WRITE) != FR_OK){
+				Error_Handler();
+			}else{
+				//Write to the text file
+				res = f_write(&SDFile, wtext, strlen((char *)wtext), (void *)&byteswritten);
+				if((byteswritten == 0) || (res != FR_OK)){
+					Error_Handler();
+				}
+				else{
+					f_close(&SDFile);
+				}
+			}
+		}
+	}
+  //Unmount File
+	f_mount(&SDFatFS, (TCHAR const*)NULL, 0);
+}
+
+
+void D_XCAM_Power_On(void){
+  
+  fprintf(PAYLOAD,"\r\tTurning off LUP in AppTasks\r");
+  EPS_write(6,1);  //  --> turn off LUP 5v
+  D_XCAM_WaitSeconds(2, true);
+  EPS_write(5,1);  //  --> turn off LUP 3.3v
+  // wait for everything to settle
+  D_XCAM_WaitSeconds(30, true);
+  EPS_check(0,1);
+        
+  fprintf(PAYLOAD,"\r\tTurning on  LUP in AppTasks\r");
+  EPS_write(5,0);  //  --> turn  on LUP 3.3v
+  D_XCAM_WaitSeconds(5,true);
+  EPS_write(6,0);  //  --> turn  on LUP 5v
+  D_XCAM_WaitSeconds(5,1);
+  EPS_check(0,1);
 }
 
 uint8_t D_XCAM_Init(void)

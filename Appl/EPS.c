@@ -6,7 +6,12 @@
 // This code queries the EPS battery voltage and current.
 // It writes the information out to a file on the OBC as
 // well as to the PAYLOAD terminal emulator. --Alice
+#include "EPS.h"
+
+
 void EPS_check(int printToFile, int printToPayload ) {
+
+
     long  battV, battC;
     long  voltZ;
     long  statusLUP3, statusLUP5;

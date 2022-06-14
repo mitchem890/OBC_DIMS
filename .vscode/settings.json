@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "xcam.h": "c"
+        "xcam.h": "c",
+        "apptasks.h": "c"
     }
 }
